@@ -54,7 +54,7 @@ export default function Home() {
             alt="SuperRobot Character"
             width={1000}
             height={600}
-            className="relative z-10 w-[38rem]"
+            className="relative z-50 w-[38rem]"
           />
         </div>
       </div>
@@ -77,6 +77,15 @@ export default function Home() {
             <br />
             First mint is free, no gas fees
           </p>
+
+          <div className="flex flex-col items-center gap-4 mb-12">
+            <button className="bg-gradient-to-r from-orange-400 to-pink-500 px-6 py-3 rounded-lg font-mono font-bold">
+              Mint for free
+            </button>
+            <div className="flex items-center">
+              <Image src="/images/Item.png" alt="item no gas" width={140} height={100} />
+            </div>
+          </div>
 
           <div className="relative">
             <Image
