@@ -15,7 +15,7 @@ const Wallet = () => {
       const address = await signer.getAddress();
       localStorage.setItem('walletAddress', address);
       router.push(`/home`);
-      console.log('Connected account:', address);
+      console.log(localStorage.getItem('walletAddress'));
     } catch (error) {
       console.error('Failed to connect wallet:', error);
     }

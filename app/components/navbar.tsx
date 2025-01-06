@@ -15,6 +15,8 @@ const Navbar = () => {
   const pathname = usePathname();
   
   if (pathname === '/wallet') return null;
+  if (pathname === '/home') return null;
+  
   return (
     <nav className={`bg-[#191B21] ${spaceMono.className} text-white p-2 border-b border-zinc-800 max-ipad:p-4`}>
       <div className="max-w-[85rem] mx-auto flex items-center justify-between">
