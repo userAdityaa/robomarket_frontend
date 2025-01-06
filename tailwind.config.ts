@@ -12,6 +12,10 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      screens: { 
+        'max-ipad': { max: '1150px' }, 
+        'max-phone': { max: '550px' },
+      }
     },
   },
   plugins: [],
