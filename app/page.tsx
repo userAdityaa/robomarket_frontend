@@ -59,7 +59,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="max-ipad:block hidden pb-30">
+      <div className="max-ipad:block hidden pb-30 max-ipad:overflow-x-hidden">
         <div className="flex flex-col items-center">
           <p className="text-[#6153CC] mb-4 flex items-center gap-2 font-bold">
             <Image src="/images/Sparkling.svg" alt="sparkling" width={20} height={20} />
