@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Space_Mono } from 'next/font/google';
 import { Twitter, HelpCircle, Gift, Box, FileText } from 'lucide-react';
 import Image from 'next/image';
-import { Robots } from '../components';
+import { MarketPlace, Robots } from '../components';
 
 const spaceMono = Space_Mono({
   weight: '400',
@@ -36,10 +36,7 @@ const FAQ = () => (
 );
 
 const BuyRobot = () => (
-  <div className="p-6">
-    <h2 className="text-2xl font-bold text-gray-200 mb-4">Buy Robot</h2>
-    <div className="text-gray-300">Robot marketplace will appear here</div>
-  </div>
+  <MarketPlace/>
 );
 
 const Twitterr = () => (

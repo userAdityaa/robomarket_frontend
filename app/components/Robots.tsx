@@ -10,7 +10,7 @@ const archivo = Archivo({
 export default function Robots() {
   return (
     <div className="p-6 bg-[#111111] min-h-screen">
-      <h1 className={`text-white ${archivo.className} text-[26px] mb-6`}>My Robots</h1>
+      <h1 className={`text-white ${archivo.className} text-3xl mb-6`}>My Robots</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-[#1a1a1a] rounded-3xl p-6">
@@ -27,7 +27,7 @@ export default function Robots() {
               height={20} 
               className="opacity-50"
             />
-            <a href="#" className="text-gray-400 text-sm flex items-center hover:text-gray-300">
+            <a href="https://opensea.io/collection/super-robots-by-superdao" className="text-gray-400 text-sm flex items-center hover:text-gray-300" target="_blank">
               View on OpenSea 
               <ArrowRight size={14} className="ml-1" />
             </a>
@@ -56,9 +56,11 @@ export default function Robots() {
             <p className="text-gray-400 mb-8">
               Expand your collection — get new robots on OpenSea
             </p>
+            <a href="https://opensea.io/collection/super-robots-by-superdao" target="_blank">
             <button className="bg-white bg-opacity-10 hover:bg-opacity-20 text-white py-3 px-6 rounded-xl">
               Buy on OpenSea
             </button>
+            </a>
             <Image src = '/images/Image.png' alt="row robot image" height={50} width={800} className="w-[90rem] mt-[12rem] absolute bottom-0"></Image>
           </div>
         </div>
