@@ -12,6 +12,23 @@ import { JsonRpcProvider } from 'ethers';
 import { AccountType } from '../wallet/page';
 import { JsonRpcSigner } from 'ethers';
 
+interface PurchasedNFT {
+  title: string;
+  image: string;
+  creator: string;
+  price: string;
+  purchaseDate: string;
+  owner: string;
+}
+
+interface CollectionNFT {
+  image: string;
+  title: string;
+  creator: string;
+  price: string;
+  priceUSD: string;
+  change: number;
+}
 
 interface MarketPlaceProps extends AccountType{}
 
@@ -25,13 +42,13 @@ interface NFTCardProps {
   image: string;
   title: string;
   creator: string;
-  price: string;
+  mintPrice: string;
   priceUSD: string;
   change: number;
   onMint: () => Promise<void>;
 }
 
-const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, price, priceUSD, change, onMint }) => (
+const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, mintPrice, priceUSD, change, onMint }) => (
   <div className="relative bg-opacity-15 bg-white rounded-xl p-4 backdrop-blur-sm">
     <div className="aspect-square rounded-lg overflow-hidden mb-3">
       <img src={image || "/api/placeholder/400/400"} alt={title} className="w-full h-full object-cover" />
@@ -40,8 +57,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, price, priceUS
     <p className="text-gray-400 text-sm mb-3">{creator}</p>
     <div className="flex justify-between items-center mb-4">
       <div>
-        <p className="text-white font-medium">{price} ETH</p>
-        <p className="text-gray-400 text-sm">Floor Price</p>
+        <p className="text-white font-medium">{mintPrice} ETH</p>
+        <p className="text-gray-400 text-sm">Mint Price</p>
       </div>
       <div className="text-right">
         <p className="text-white">${priceUSD}</p>
@@ -67,8 +84,9 @@ export const MarketPlace = () => {
   const [mintPrice, setMintPrice] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [availableCollections, setAvailableCollections] = useState<CollectionNFT[]>([]);
   
-  const collections = [
+  const collections: CollectionNFT[] = [
     {
       image: "/images/first.avif",
       title: "CoolGuyzz",
@@ -134,9 +152,48 @@ export const MarketPlace = () => {
         change: 12.45
     }
   ];
+  
 
   const contractAddress = "0xc7b96B5CAfe0E02926b73A14449F8534b66E350C"
 
+  const filterPurchasedNFTs = (): CollectionNFT[] => { 
+    if(!accountData?.address) return collections; 
+    try { 
+      const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
+      const walletNFTs = allStoredNFTs[accountData.address] || [];
+      const purchasedTitles: Set<string> = new Set<string>(walletNFTs.map((nft: PurchasedNFT) => nft.title));
+      return collections.filter(collection => !purchasedTitles.has(collection.title));
+    } catch(error) { 
+      console.error(error);
+      return collections;
+    }
+  }
+
+  useEffect(() => {
+    const filtered = filterPurchasedNFTs();
+    setAvailableCollections(filtered);
+  }, [accountData]);
+
+  const saveNFTToStorage = (nftData: PurchasedNFT) => {
+    try {
+      const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
+      
+      const walletNFTs = allStoredNFTs[nftData.owner] || [];
+      
+      const updatedWalletNFTs = [...walletNFTs, nftData];
+      
+      const updatedStorage = {
+        ...allStoredNFTs,
+        [nftData.owner]: updatedWalletNFTs
+      };
+      
+      localStorage.setItem('purchasedNFTs', JSON.stringify(updatedStorage));
+      const filtered = filterPurchasedNFTs();
+      setAvailableCollections(filtered);
+    } catch (error) {
+      console.error('Error saving NFT to localStorage:', error);
+    }
+  };
 
   useEffect(() => {
     const initializeProvider = async () => {
@@ -194,12 +251,10 @@ export const MarketPlace = () => {
     initialize();
   }, [provider]);
 
-  const handleMint = async() => { 
+  const handleMint = async(nftData: Omit<PurchasedNFT, 'purchaseDate' | 'owner'>) => { 
     try { 
       setLoading(true);
       setMessage('');
-
-      console.log(contract);
       if(!contract) { 
         throw new Error("Contract not initialized.");
       }
@@ -210,6 +265,12 @@ export const MarketPlace = () => {
   
       setMessage('Minting in progress...');
       await tx.wait();
+      const purchasedNFT: PurchasedNFT = {
+        ...nftData,
+        purchaseDate: new Date().toISOString(),
+        owner: accountData?.address!
+      };
+      saveNFTToStorage(purchasedNFT);
       setMessage('NFT Minted successfully!');
     } catch (error) { 
       console.error("Failed to Mint.", error);
@@ -243,13 +304,23 @@ export const MarketPlace = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {collections.map((collection) => (
-          <NFTCard 
-            key={collection.title} 
-            {...collection} 
-            onMint={handleMint}
-          />
-        ))}
+      {availableCollections.map((collection) => (
+        <NFTCard 
+          key={collection.title}
+          image={collection.image}
+          title={collection.title}
+          creator={collection.creator}
+          mintPrice={mintPrice}
+          priceUSD={collection.priceUSD}
+          change={collection.change}
+          onMint={() => handleMint({
+            title: collection.title,
+            image: collection.image,
+            creator: collection.creator,
+            price: mintPrice
+          })}
+        />
+      ))}
       </div>
 
       <div className="flex justify-center">
