@@ -1,12 +1,19 @@
+'use client';
 import React, { useEffect, useState } from 'react';
-import { Heart, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Archivo } from 'next/font/google';
-import contractABI from '../../../contracts/artifacts/contracts/NFT.sol/NFTMarketplaceToken.json'
 import { ethers } from 'ethers';
 import { getProvider, getSigner } from '../hooks/useMetaMask';
 import { BrowserProvider } from 'ethers';
 import { Contract } from 'ethers';
+import contractABI from '../artifacts/contracts/NFT.sol/NFTMarketplaceToken.json'
+import { parseEther } from 'ethers';
+import { JsonRpcProvider } from 'ethers';
+import { AccountType } from '../wallet/page';
+import { JsonRpcSigner } from 'ethers';
 
+
+interface MarketPlaceProps extends AccountType{}
 
 const archivo = Archivo({
   weight: '900',
@@ -15,22 +22,23 @@ const archivo = Archivo({
 
 
 interface NFTCardProps {
-    image: string;
-    title: string;
-    creator: string;
-    price: string;
-    priceUSD: string;
-    change: number;
-  }
+  image: string;
+  title: string;
+  creator: string;
+  price: string;
+  priceUSD: string;
+  change: number;
+  onMint: () => Promise<void>;
+}
 
-const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, price, priceUSD, change }) => (
+const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, price, priceUSD, change, onMint }) => (
   <div className="relative bg-opacity-15 bg-white rounded-xl p-4 backdrop-blur-sm">
     <div className="aspect-square rounded-lg overflow-hidden mb-3">
       <img src={image || "/api/placeholder/400/400"} alt={title} className="w-full h-full object-cover" />
     </div>
     <h3 className="text-white font-semibold mb-1">{title}</h3>
     <p className="text-gray-400 text-sm mb-3">{creator}</p>
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center mb-4">
       <div>
         <p className="text-white font-medium">{price} ETH</p>
         <p className="text-gray-400 text-sm">Floor Price</p>
@@ -42,13 +50,19 @@ const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, price, priceUS
         </p>
       </div>
     </div>
+    <button 
+      onClick={onMint}
+      className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+    >
+      Mint NFT
+    </button>
   </div>
 );
 
 export const MarketPlace = () => {
-
   const [provider, setProvider] = useState<BrowserProvider>();
-  const [account, setAccount] = useState('');
+  const [signer, setSigner] = useState<JsonRpcSigner>();
+  const [accountData, setAccountData] = useState<AccountType>();
   const [contract, setContract] = useState<Contract>();
   const [mintPrice, setMintPrice] = useState('');
   const [loading, setLoading] = useState(false);
@@ -125,38 +139,83 @@ export const MarketPlace = () => {
 
 
   useEffect(() => {
-    const initialize = async () => {
-      const signer = await getSigner();
-      const nftContract = new ethers.Contract(
-        contractAddress, 
-        contractABI.abi, 
-        signer
-      );
+    const initializeProvider = async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          const storedData = localStorage.getItem('walletData');
 
-      setProvider(await getProvider());
-      setAccount(localStorage.getItem("walletAddress")!);
-      setContract(nftContract);
-      const price = await nftContract.mintPrice();
-      setMintPrice(ethers.formatEther(price));
+          if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            setAccountData(parsedData);
+            setProvider(provider);
+            setSigner(signer);
+          }
+        } catch (error) {
+          console.error('Error initializing provider:', error);
+        }
+      }
+    };
+
+    initializeProvider();
+  }, []);
+
+  useEffect(() => {
+    if (!provider) return;
+
+    const initialize = async () => {
+      try {
+        const code = await provider.getCode(contractAddress);
+        if (code === '0x') {
+          console.error('No contract found at address:', contractAddress);
+          return;
+        }
+        const nftContract = new ethers.Contract(
+          contractAddress,
+          contractABI.abi,
+          signer
+        );
+        setContract(nftContract);
+        try {
+          const price = await nftContract.mintPrice();
+          const formattedPrice = ethers.formatEther(price);
+          setMintPrice(formattedPrice);
+        } catch (error) {
+          console.error('Error getting mint price:', error);
+          console.log('Contract ABI:', contractABI.abi);
+        }
+
+      } catch (error) {
+        console.error('Initialization error:', error);
+      }
     };
 
     initialize();
-  }, []);
-
+  }, [provider]);
 
   const handleMint = async() => { 
     try { 
+      setLoading(true);
+      setMessage('');
+
+      console.log(contract);
       if(!contract) { 
         throw new Error("Contract not initialized.");
       }
-
-      const tx = await contract.mint(account, {
-        value: ethers.parseEther(mintPrice)
+  
+      const tx = await contract?.mint(contractAddress, {
+        value: parseEther(mintPrice)
       });
-
+  
+      setMessage('Minting in progress...');
       await tx.wait();
+      setMessage('NFT Minted successfully!');
     } catch (error) { 
       console.error("Failed to Mint.", error);
+      setMessage('Failed to mint NFT. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -185,7 +244,11 @@ export const MarketPlace = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {collections.map((collection) => (
-          <NFTCard key={collection.title} {...collection} />
+          <NFTCard 
+            key={collection.title} 
+            {...collection} 
+            onMint={handleMint}
+          />
         ))}
       </div>
 
