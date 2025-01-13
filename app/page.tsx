@@ -1,5 +1,6 @@
 import { Space_Mono, Archivo } from "next/font/google";
 import Image from "next/image";
+import { WalletProvider } from "@/context/walletConnect";
 
 const spaceMono = Space_Mono({
   weight: '400',
@@ -13,6 +14,7 @@ const archivo = Archivo({
 
 export default function Home() {
   return (
+    <WalletProvider>
     <main className={`bg-zinc-900 min-h-screen text-white p-8 ${spaceMono.className} py-28`}>
       
       <div className="max-w-7xl mx-auto flex items-center justify-between max-ipad:hidden">
@@ -104,5 +106,6 @@ export default function Home() {
       </div>
 
     </main>
+    </WalletProvider>
   );
 }

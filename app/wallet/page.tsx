@@ -2,31 +2,86 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { getSigner } from '../hooks/useMetaMask'
+import { getProvider, getSigner } from '../hooks/useMetaMask'
+import { useCallback } from 'react';
+import { ethers } from 'ethers';
+import { JsonRpcSigner } from 'ethers';
+import { BrowserProvider } from 'ethers';
 
+export interface AccountType { 
+  address?: string;
+  balance?: string; 
+  chainId?: string; 
+  network?: string;
+  signer?: JsonRpcSigner;
+  provider?:BrowserProvider;
+}
+
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 
 const Wallet = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [accountData, setAccountData] = useState<AccountType>({});
   const router = useRouter();
 
-  const connectWallet = async () => {
-    try {
-      const signer = await getSigner();
-      const address = await signer.getAddress();
-      localStorage.setItem('walletAddress', address);
-      router.push(`/home`);
-      console.log(localStorage.getItem('walletAddress'));
-    } catch (error) {
-      console.error('Failed to connect wallet:', error);
+  const connectWallet = useCallback(async () => {
+    const ethereum = window.ethereum;
+    if (!ethereum) {
+      alert("MetaMask not installed");
+      return;
     }
-  };
-
+  
+    try {
+      await ethereum.request({
+        method: "wallet_requestPermissions",
+        params: [{ eth_accounts: {} }],
+      });
+  
+      try {
+        const accounts = await ethereum.request({
+          method: "eth_requestAccounts",
+        });
+        
+        const address = accounts[0];
+        const provider = new ethers.BrowserProvider(ethereum);
+        const balance = await provider.getBalance(address);
+        const network = await provider.getNetwork();
+        
+        localStorage.setItem('walletData', JSON.stringify({
+          address,
+          balance: ethers.formatEther(balance),
+          chainId: network.chainId.toString(),
+          network: network.name
+        }));
+        
+        router.push('/home');
+      } catch (error) {
+        console.error("error", error)
+      }
+    } catch (error: any) {
+      if (error.code === -32002) {
+        alert("Please check MetaMask for a pending connection request.");
+      } else {
+        console.error("Error connecting to MetaMask:", error);
+        alert(`Error connecting to MetaMask: ${error.message || error}`);
+      }
+    }
+  }, []);
+  
+  
   const handleConnect = async () => {
     setIsLoading(true);
     try {
       await connectWallet();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error connecting to MetaMask:', error);
+      if (error.code === -32002) {
+        alert('Please check MetaMask for pending connection request');
+      }
     } finally {
       setIsLoading(false);
     }
