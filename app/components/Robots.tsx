@@ -1,17 +1,17 @@
-'use client'
-import { Archivo } from "next/font/google";
-import Image from "next/image";
-import { ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
+'use client';
+import { Archivo } from 'next/font/google';
+import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const archivo = Archivo({
   weight: '900',
-  subsets: ['latin']
+  subsets: ['latin'],
 });
 
 interface PurchasedNFT {
   title: string;
-  image: string;
+  image: string; 
   creator: string;
   price: string;
   purchaseDate: string;
@@ -23,16 +23,15 @@ export default function Robots() {
   const [walletAddress, setWalletAddress] = useState<string>('');
 
   useEffect(() => {
-    // Get wallet address from localStorage
     const storedData = localStorage.getItem('walletData');
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       setWalletAddress(parsedData.address);
     }
 
-    // Get purchased NFTs for this wallet
     try {
       const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
+      console.log(allStoredNFTs)
       if (walletAddress && allStoredNFTs[walletAddress]) {
         setPurchasedNFTs(allStoredNFTs[walletAddress]);
       }
@@ -46,7 +45,6 @@ export default function Robots() {
       <h1 className={`text-white ${archivo.className} text-3xl mb-6`}>My Robots</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {purchasedNFTs.length > 0 ? (
-          // Map through purchased NFTs
           purchasedNFTs.map((nft, index) => (
             <div key={`${nft.title}-${index}`} className="bg-[#1a1a1a] rounded-3xl p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -61,9 +59,9 @@ export default function Robots() {
                   height={20}
                   className="opacity-50"
                 />
-                <a 
-                  href="https://opensea.io/collection/super-robots-by-superdao" 
-                  className="text-gray-400 text-sm flex items-center hover:text-gray-300" 
+                <a
+                  href="https://opensea.io/collection/super-robots-by-superdao"
+                  className="text-gray-400 text-sm flex items-center hover:text-gray-300"
                   target="_blank"
                 >
                   View on OpenSea
@@ -71,6 +69,7 @@ export default function Robots() {
                 </a>
               </div>
               <div className="relative aspect-square mb-4 bg-[#e8f5d3] rounded-2xl overflow-hidden">
+                {/* Use the base64 string directly in the src attribute */}
                 <Image
                   src={nft.image}
                   alt={nft.title}
@@ -101,7 +100,11 @@ export default function Robots() {
                 height={20}
                 className="opacity-50"
               />
-              <a href="https://opensea.io/collection/super-robots-by-superdao" className="text-gray-400 text-sm flex items-center hover:text-gray-300" target="_blank">
+              <a
+                href="https://opensea.io/collection/super-robots-by-superdao"
+                className="text-gray-400 text-sm flex items-center hover:text-gray-300"
+                target="_blank"
+              >
                 View on OpenSea
                 <ArrowRight size={14} className="ml-1" />
               </a>
@@ -134,11 +137,11 @@ export default function Robots() {
                 Buy on OpenSea
               </button>
             </a>
-            <Image 
-              src='/images/Image.png' 
-              alt="row robot image" 
-              height={50} 
-              width={800} 
+            <Image
+              src="/images/Image.png"
+              alt="row robot image"
+              height={50}
+              width={800}
               className="w-[90rem] mt-[12rem] absolute bottom-0"
             />
           </div>
