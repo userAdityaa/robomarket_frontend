@@ -1,9 +1,10 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Space_Mono } from 'next/font/google';
-import { Twitter, HelpCircle, Gift, Box, FileText } from 'lucide-react';
+import { Twitter, HelpCircle, Gift, Box, FileText, PackagePlus } from 'lucide-react';
 import Image from 'next/image';
-import { MarketPlace, Robots } from '../components';
+import { MarketPlace, Robots, CreateNFT, CrowdFunding } from '../components';
+
 
 const spaceMono = Space_Mono({
   weight: '400',
@@ -14,11 +15,8 @@ const MyRobots = () => (
   <Robots/>
 );
 
-const InviteFriends = () => (
-  <div className="p-6">
-    <h2 className="text-2xl font-bold text-gray-200 mb-4">Invite Friends</h2>
-    <div className="text-gray-300">Share your referral link with friends</div>
-  </div>
+const CrowdFundingg = () => (
+  <CrowdFunding/>
 );
 
 const Roadmap = () => (
@@ -46,6 +44,10 @@ const Twitterr = () => (
   </div>
 );
 
+const create = () => ( 
+  <CreateNFT/>
+)
+
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState("");
   const [activePage, setActivePage] = useState("myRobots");
@@ -59,11 +61,12 @@ export default function Home() {
 
   const menuItems = [
     { id: 'myRobots', label: 'My Robots', icon: Box, component: MyRobots },
-    { id: 'inviteFriends', label: 'Invite friends', icon: Gift, badge: '5', component: InviteFriends },
+    { id: 'Crowdfunding', label: 'Crowd Funding', icon: Gift, badge: '5', component: CrowdFundingg },
     { id: 'roadmap', label: 'Roadmap', icon: FileText, soon: true, component: Roadmap },
     { id: 'faq', label: 'FAQ', icon: HelpCircle, component: FAQ },
     { id: 'buyRobot', label: 'Buy Robot', icon: Box, component: BuyRobot },
-    { id: 'twitter', label: 'Twitter', icon: Twitter, component: Twitterr }
+    { id: 'twitter', label: 'Twitter', icon: Twitter, component: Twitterr }, 
+    { id: 'create nft', label: "Create Nft", icon: PackagePlus, component: create}
   ];
 
   const ActiveComponent = menuItems.find(item => item.id === activePage)?.component || MyRobots;
