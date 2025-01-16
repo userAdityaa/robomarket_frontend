@@ -31,6 +31,9 @@ const CrowdFunding = () => {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
   const [accountData, setAccountData] = useState<AccountType | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const contractAddress = '0x3Bd1a89cd6D97f381035B80CdD3c2CCb1D1d7519';
 
   // Initialize provider and signer
@@ -77,7 +80,6 @@ const CrowdFunding = () => {
         );
         setContract(crowdFundingContract);
 
-        console.log(crowdFundingContract);
         const campaigns = await crowdFundingContract.getAllCamapigns();
         setCampaigns(campaigns);
       } catch (error) {
@@ -88,7 +90,28 @@ const CrowdFunding = () => {
     initializeContract();
   }, [provider, signer]);
 
-  // CampaignCard component
+  // Handle payment
+  const handlePayment = async () => {
+    if (!contract || !selectedCampaign || !paymentAmount) return;
+
+    try {
+      const amountInWei = ethers.parseEther(paymentAmount);
+      const tx = await contract.contribute(selectedCampaign.id, { value: amountInWei });
+      await tx.wait();
+
+      // Refresh campaigns after payment
+      const updatedCampaigns = await contract.getAllCamapigns();
+      setCampaigns(updatedCampaigns);
+
+      // Close modal and reset state
+      setIsModalOpen(false);
+      setSelectedCampaign(null);
+      setPaymentAmount('');
+    } catch (error) {
+      console.error('Error making payment:', error);
+    }
+  };
+
   const CampaignCard = ({ campaign }: { campaign: Campaign }) => {
     const progress = Number((campaign.totalContributions) / campaign.goal);
     const daysLeft = Math.floor(
@@ -96,7 +119,13 @@ const CrowdFunding = () => {
     );
 
     return (
-      <div className="w-full max-w-[25rem] bg-opacity-15 bg-white rounded-xl p-6 backdrop-blur-sm">
+      <div
+        className="w-full max-w-[25rem] bg-opacity-15 bg-white rounded-xl p-6 backdrop-blur-sm cursor-pointer"
+        onClick={() => {
+          setSelectedCampaign(campaign);
+          setIsModalOpen(true);
+        }}
+      >
         <div className="mb-6 relative">
           <img
             src={campaign.imageURI}
@@ -148,6 +177,36 @@ const CrowdFunding = () => {
           <CampaignCard key={campaign.id.toString()} campaign={campaign} />
         ))}
       </div>
+
+      {/* Payment Modal */}
+      {isModalOpen && selectedCampaign && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Contribute to {selectedCampaign.title}</h2>
+            <input
+              type="text"
+              placeholder="Amount in ETH"
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePayment}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Pay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
