@@ -13,12 +13,14 @@ import { AccountType } from '../wallet/page';
 import { JsonRpcSigner } from 'ethers';
 
 interface PurchasedNFT {
+  tokenId: number;
   title: string;
   image: string;
   creator: string;
   price: string;
   purchaseDate: string;
   owner: string;
+  metadataURI: string;
 }
 
 interface CollectionNFT {
@@ -28,15 +30,23 @@ interface CollectionNFT {
   price: string;
   priceUSD: string;
   change: number;
+  metadataURI: string;
 }
-
-interface MarketPlaceProps extends AccountType{}
 
 const archivo = Archivo({
   weight: '900',
   subsets: ['latin']
 });
 
+interface NFTCardProps {
+  image: string;
+  title: string;
+  creator: string;
+  mintPrice: string;
+  priceUSD: string;
+  change: number;
+  onMint: () => Promise<void>;
+}
 
 interface NFTCardProps {
   image: string;
@@ -76,6 +86,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, mintPrice, pri
   </div>
 );
 
+
 export const MarketPlace = () => {
   const [provider, setProvider] = useState<BrowserProvider>();
   const [signer, setSigner] = useState<JsonRpcSigner>();
@@ -85,6 +96,7 @@ export const MarketPlace = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [availableCollections, setAvailableCollections] = useState<CollectionNFT[]>([]);
+  const [nftTokens, setNftTokens] = useState<Map<string, number>>(new Map());
   
   const collections: CollectionNFT[] = [
     {
@@ -93,7 +105,8 @@ export const MarketPlace = () => {
       creator: "Coolguyzz.io",
       price: "1.5",
       priceUSD: "2045.12",
-      change: -12.45
+      change: -12.45, 
+      metadataURI: "ipfs://QmExample1" 
     },
     {
       image: "/images/second.avif",
@@ -101,7 +114,8 @@ export const MarketPlace = () => {
       creator: "GB_Gangs",
       price: "2.53",
       priceUSD: "4487",
-      change: 34.5
+      change: 34.5, 
+      metadataURI: "ipfs://QmExample1" 
     },
     {
       image: "/images/third.avif",
@@ -109,7 +123,8 @@ export const MarketPlace = () => {
       creator: "HyperApe.co",
       price: "1.31",
       priceUSD: "1743.4",
-      change: -5.6
+      change: -5.6, 
+      metadataURI: "ipfs://QmExample1" 
     },
     {
       image: "/images/four.avif",
@@ -117,7 +132,8 @@ export const MarketPlace = () => {
       creator: "Naomi Po",
       price: "1.156",
       priceUSD: "1670",
-      change: 12.45
+      change: 12.45, 
+      metadataURI: "ipfs://QmExample1" 
     }, 
     {
         image: "/images/five.avif",
@@ -125,7 +141,8 @@ export const MarketPlace = () => {
         creator: "Naomi Po",
         price: "1.156",
         priceUSD: "1670",
-        change: 12.45
+        change: 12.45, 
+        metadataURI: "ipfs://QmExample1" 
     }, 
     {
         image: "/images/six.avif",
@@ -133,7 +150,8 @@ export const MarketPlace = () => {
         creator: "Naomi Po",
         price: "1.156",
         priceUSD: "1670",
-        change: 12.45
+        change: 12.45, 
+        metadataURI: "ipfs://QmExample1" 
     }, 
     {
         image: "/images/seven.avif",
@@ -141,7 +159,8 @@ export const MarketPlace = () => {
         creator: "Naomi Po",
         price: "1.156",
         priceUSD: "1670",
-        change: 12.45
+        change: 12.45, 
+        metadataURI: "ipfs://QmExample1" 
     },
     {
     image: "/images/eight.avif",
@@ -149,25 +168,27 @@ export const MarketPlace = () => {
         creator: "Naomi Po",
         price: "1.156",
         priceUSD: "1670",
-        change: 12.45
+        change: 12.45, 
+        metadataURI: "ipfs://QmExample1" 
     }
   ];
   
 
-  const contractAddress = "0xc7b96B5CAfe0E02926b73A14449F8534b66E350C"
+  const contractAddress = "0xEc015814aC9158e1783e7528fa5E3fe2648D5509"
 
-  const filterPurchasedNFTs = (): CollectionNFT[] => { 
-    if(!accountData?.address) return collections; 
-    try { 
+  const filterPurchasedNFTs = (): CollectionNFT[] => {
+    if(!accountData?.address) return collections;
+    try {
       const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
       const walletNFTs = allStoredNFTs[accountData.address] || [];
       const purchasedTitles: Set<string> = new Set<string>(walletNFTs.map((nft: PurchasedNFT) => nft.title));
       return collections.filter(collection => !purchasedTitles.has(collection.title));
-    } catch(error) { 
+    } catch(error) {
       console.error(error);
       return collections;
     }
-  }
+  };
+
 
   useEffect(() => {
     const filtered = filterPurchasedNFTs();
@@ -177,16 +198,12 @@ export const MarketPlace = () => {
   const saveNFTToStorage = (nftData: PurchasedNFT) => {
     try {
       const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
-      
       const walletNFTs = allStoredNFTs[nftData.owner] || [];
-      
       const updatedWalletNFTs = [...walletNFTs, nftData];
-      
       const updatedStorage = {
         ...allStoredNFTs,
         [nftData.owner]: updatedWalletNFTs
       };
-      
       localStorage.setItem('purchasedNFTs', JSON.stringify(updatedStorage));
       const filtered = filterPurchasedNFTs();
       setAvailableCollections(filtered);
@@ -201,14 +218,16 @@ export const MarketPlace = () => {
         try {
           const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner();
-          const storedData = localStorage.getItem('walletData');
-
-          if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            setAccountData(parsedData);
-            setProvider(provider);
-            setSigner(signer);
-          }
+          const address = await signer.getAddress();
+          const balance = await provider.getBalance(address);
+          
+          const accountData = {
+            address,
+            balance: ethers.formatEther(balance)
+          };          
+          setAccountData(accountData);
+          setProvider(provider);
+          setSigner(signer);
         } catch (error) {
           console.error('Error initializing provider:', error);
         }
@@ -219,66 +238,95 @@ export const MarketPlace = () => {
   }, []);
 
   useEffect(() => {
-    if (!provider) return;
+    if (!provider || !signer) return;
 
     const initialize = async () => {
       try {
+        
         const code = await provider.getCode(contractAddress);
         if (code === '0x') {
           console.error('No contract found at address:', contractAddress);
           return;
         }
+        
         const nftContract = new ethers.Contract(
           contractAddress,
           contractABI.abi,
           signer
         );
+        
         setContract(nftContract);
-        try {
-          const price = await nftContract.mintPrice();
-          const formattedPrice = ethers.formatEther(price);
-          setMintPrice(formattedPrice);
-        } catch (error) {
-          console.error('Error getting mint price:', error);
-          console.log('Contract ABI:', contractABI.abi);
-        }
-
+        
+        const price = await nftContract.mintPrice();
+        const formattedPrice = ethers.formatEther(price);
+        setMintPrice(formattedPrice);
       } catch (error) {
         console.error('Initialization error:', error);
       }
     };
 
     initialize();
-  }, [provider]);
+  }, [provider, signer]);
 
-  const handleMint = async(nftData: Omit<PurchasedNFT, 'purchaseDate' | 'owner'>) => { 
-    try { 
+  const handleMint = async (nftData: CollectionNFT) => {
+    try {
       setLoading(true);
-      setMessage('');
-      if(!contract) { 
-        throw new Error("Contract not initialized.");
+      setMessage('Creating NFT...');
+      
+      if (!contract || !accountData?.address) {
+        throw new Error("Contract not initialized or wallet not connected");
       }
-  
-      const tx = await contract?.mint(contractAddress, {
+
+      // Step 1: Create the NFT
+      const createTx = await contract.createNFT(
+        nftData.metadataURI,
+        parseEther(nftData.price)
+      );
+      
+      setMessage('Waiting for NFT creation confirmation...');
+      const createReceipt = await createTx.wait();
+      
+      // Get the tokenId from the event
+      const event = createReceipt.logs.find(
+        (log: any) => log.eventName === 'NFTCreated'
+      );
+      
+      if (!event) {
+        throw new Error("Could not get tokenId from creation event");
+      }
+      
+      const tokenId = event.args[0];
+      
+      // Step 2: Mint the NFT
+      setMessage('Minting NFT...');
+      const mintTx = await contract.mintNFT(tokenId, accountData.address, {
         value: parseEther(mintPrice)
       });
-  
-      setMessage('Minting in progress...');
-      await tx.wait();
+      
+      setMessage('Waiting for mint confirmation...');
+      await mintTx.wait();
+      
+      // Save to local storage
       const purchasedNFT: PurchasedNFT = {
-        ...nftData,
+        tokenId: Number(tokenId),
+        title: nftData.title,
+        image: nftData.image,
+        creator: nftData.creator,
+        price: mintPrice,
         purchaseDate: new Date().toISOString(),
-        owner: accountData?.address!
+        owner: accountData.address,
+        metadataURI: nftData.metadataURI
       };
+      
       saveNFTToStorage(purchasedNFT);
       setMessage('NFT Minted successfully!');
-    } catch (error) { 
-      console.error("Failed to Mint.", error);
-      setMessage('Failed to mint NFT. Please try again.');
+    } catch (error: any) {
+      console.error("Failed to Mint:", error);
+      setMessage(error.message || 'Failed to mint NFT. Please try again.');
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const categories = ["Art", "Collectibles", "Metaverse", "Virtual Worlds", "Sports", "Music"];
 
@@ -306,20 +354,15 @@ export const MarketPlace = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {availableCollections.map((collection) => (
         <NFTCard 
-          key={collection.title}
-          image={collection.image}
-          title={collection.title}
-          creator={collection.creator}
-          mintPrice={mintPrice}
-          priceUSD={collection.priceUSD}
-          change={collection.change}
-          onMint={() => handleMint({
-            title: collection.title,
-            image: collection.image,
-            creator: collection.creator,
-            price: mintPrice
-          })}
-        />
+        key={collection.title}
+        image={collection.image}
+        title={collection.title}
+        creator={collection.creator}
+        mintPrice={mintPrice}
+        priceUSD={collection.priceUSD}
+        change={collection.change}
+        onMint={() => handleMint(collection)}
+      />
       ))}
       </div>
 
