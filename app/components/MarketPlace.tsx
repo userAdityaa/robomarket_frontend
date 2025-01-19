@@ -3,14 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Archivo } from 'next/font/google';
 import { ethers } from 'ethers';
-import { getProvider, getSigner } from '../hooks/useMetaMask';
-import { BrowserProvider } from 'ethers';
-import { Contract } from 'ethers';
-import contractABI from '../artifacts/contracts/NFT.sol/NFTMarketplaceToken.json'
-import { parseEther } from 'ethers';
-import { JsonRpcProvider } from 'ethers';
-import { AccountType } from '../wallet/page';
-import { JsonRpcSigner } from 'ethers';
+import contractABI from '../artifacts/contracts/NFT.sol/NFTMarketplaceToken.json';
+
+const archivo = Archivo({
+  weight: '900',
+  subsets: ['latin'],
+});
 
 interface PurchasedNFT {
   tokenId: number;
@@ -31,21 +29,6 @@ interface CollectionNFT {
   priceUSD: string;
   change: number;
   metadataURI: string;
-}
-
-const archivo = Archivo({
-  weight: '900',
-  subsets: ['latin']
-});
-
-interface NFTCardProps {
-  image: string;
-  title: string;
-  creator: string;
-  mintPrice: string;
-  priceUSD: string;
-  change: number;
-  onMint: () => Promise<void>;
 }
 
 interface NFTCardProps {
@@ -86,131 +69,17 @@ const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, mintPrice, pri
   </div>
 );
 
-
 export const MarketPlace = () => {
-  const [provider, setProvider] = useState<BrowserProvider>();
-  const [signer, setSigner] = useState<JsonRpcSigner>();
-  const [accountData, setAccountData] = useState<AccountType>();
-  const [contract, setContract] = useState<Contract>();
+  const [provider, setProvider] = useState<ethers.BrowserProvider>();
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner>();
+  const [accountData, setAccountData] = useState<{ address: string; balance: string }>();
+  const [contract, setContract] = useState<ethers.Contract>();
   const [mintPrice, setMintPrice] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [availableCollections, setAvailableCollections] = useState<CollectionNFT[]>([]);
-  const [nftTokens, setNftTokens] = useState<Map<string, number>>(new Map());
-  
-  const collections: CollectionNFT[] = [
-    {
-      image: "/images/first.avif",
-      title: "CoolGuyzz",
-      creator: "Coolguyzz.io",
-      price: "1.5",
-      priceUSD: "2045.12",
-      change: -12.45, 
-      metadataURI: "ipfs://QmExample1" 
-    },
-    {
-      image: "/images/second.avif",
-      title: "gangstaboi v.1",
-      creator: "GB_Gangs",
-      price: "2.53",
-      priceUSD: "4487",
-      change: 34.5, 
-      metadataURI: "ipfs://QmExample1" 
-    },
-    {
-      image: "/images/third.avif",
-      title: "HyperApe",
-      creator: "HyperApe.co",
-      price: "1.31",
-      priceUSD: "1743.4",
-      change: -5.6, 
-      metadataURI: "ipfs://QmExample1" 
-    },
-    {
-      image: "/images/four.avif",
-      title: "Lyodd$1",
-      creator: "Naomi Po",
-      price: "1.156",
-      priceUSD: "1670",
-      change: 12.45, 
-      metadataURI: "ipfs://QmExample1" 
-    }, 
-    {
-        image: "/images/five.avif",
-        title: "Container",
-        creator: "Naomi Po",
-        price: "1.156",
-        priceUSD: "1670",
-        change: 12.45, 
-        metadataURI: "ipfs://QmExample1" 
-    }, 
-    {
-        image: "/images/six.avif",
-        title: "Container-container",
-        creator: "Naomi Po",
-        price: "1.156",
-        priceUSD: "1670",
-        change: 12.45, 
-        metadataURI: "ipfs://QmExample1" 
-    }, 
-    {
-        image: "/images/seven.avif",
-        title: "seven",
-        creator: "Naomi Po",
-        price: "1.156",
-        priceUSD: "1670",
-        change: 12.45, 
-        metadataURI: "ipfs://QmExample1" 
-    },
-    {
-    image: "/images/eight.avif",
-        title: "Eight",
-        creator: "Naomi Po",
-        price: "1.156",
-        priceUSD: "1670",
-        change: 12.45, 
-        metadataURI: "ipfs://QmExample1" 
-    }
-  ];
-  
 
-  const contractAddress = "0xEc015814aC9158e1783e7528fa5E3fe2648D5509"
-
-  const filterPurchasedNFTs = (): CollectionNFT[] => {
-    if(!accountData?.address) return collections;
-    try {
-      const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
-      const walletNFTs = allStoredNFTs[accountData.address] || [];
-      const purchasedTitles: Set<string> = new Set<string>(walletNFTs.map((nft: PurchasedNFT) => nft.title));
-      return collections.filter(collection => !purchasedTitles.has(collection.title));
-    } catch(error) {
-      console.error(error);
-      return collections;
-    }
-  };
-
-
-  useEffect(() => {
-    const filtered = filterPurchasedNFTs();
-    setAvailableCollections(filtered);
-  }, [accountData]);
-
-  const saveNFTToStorage = (nftData: PurchasedNFT) => {
-    try {
-      const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
-      const walletNFTs = allStoredNFTs[nftData.owner] || [];
-      const updatedWalletNFTs = [...walletNFTs, nftData];
-      const updatedStorage = {
-        ...allStoredNFTs,
-        [nftData.owner]: updatedWalletNFTs
-      };
-      localStorage.setItem('purchasedNFTs', JSON.stringify(updatedStorage));
-      const filtered = filterPurchasedNFTs();
-      setAvailableCollections(filtered);
-    } catch (error) {
-      console.error('Error saving NFT to localStorage:', error);
-    }
-  };
+  const contractAddress = "0xd8D343348C86b7f1Ec9e213e86ca9A1212045151";
 
   useEffect(() => {
     const initializeProvider = async () => {
@@ -220,12 +89,8 @@ export const MarketPlace = () => {
           const signer = await provider.getSigner();
           const address = await signer.getAddress();
           const balance = await provider.getBalance(address);
-          
-          const accountData = {
-            address,
-            balance: ethers.formatEther(balance)
-          };          
-          setAccountData(accountData);
+
+          setAccountData({ address, balance: ethers.formatEther(balance) });
           setProvider(provider);
           setSigner(signer);
         } catch (error) {
@@ -240,84 +105,67 @@ export const MarketPlace = () => {
   useEffect(() => {
     if (!provider || !signer) return;
 
-    const initialize = async () => {
+    const initializeContract = async () => {
       try {
-        
-        const code = await provider.getCode(contractAddress);
-        if (code === '0x') {
-          console.error('No contract found at address:', contractAddress);
-          return;
-        }
-        
-        const nftContract = new ethers.Contract(
-          contractAddress,
-          contractABI.abi,
-          signer
-        );
-        
+        const nftContract = new ethers.Contract(contractAddress, contractABI.abi, signer);
         setContract(nftContract);
-        
+
         const price = await nftContract.mintPrice();
-        const formattedPrice = ethers.formatEther(price);
-        setMintPrice(formattedPrice);
+        setMintPrice(ethers.formatEther(price));
+
+        console.log(nftContract)
+        const allNFTs = await nftContract.getAllNFTs();
+        const collections: CollectionNFT[] = allNFTs.map((nft: any) => ({
+          image: nft.imageURL,
+          title: nft.name,
+          creator: nft.creator,
+          price: ethers.formatEther(nft.price),
+          priceUSD: "0", 
+          change: 0, 
+          metadataURI: nft.name,
+        }));
+
+        setAvailableCollections(collections);
       } catch (error) {
-        console.error('Initialization error:', error);
+        console.error('Error initializing contract:', error);
       }
     };
 
-    initialize();
+    initializeContract();
   }, [provider, signer]);
 
   const handleMint = async (nftData: CollectionNFT) => {
     try {
       setLoading(true);
       setMessage('Creating NFT...');
-      
+
       if (!contract || !accountData?.address) {
         throw new Error("Contract not initialized or wallet not connected");
       }
 
       // Step 1: Create the NFT
-      const createTx = await contract.createNFT(
-        nftData.metadataURI,
-        parseEther(nftData.price)
-      );
-      
+      const createTx = await contract.createNFT(nftData.title, nftData.metadataURI, ethers.parseEther(nftData.price));
       setMessage('Waiting for NFT creation confirmation...');
-      const createReceipt = await createTx.wait();
-      
-      // Get the tokenId from the event
-      const event = createReceipt.logs.find(
-        (log: any) => log.eventName === 'NFTCreated'
-      );
-      
-      if (!event) {
-        throw new Error("Could not get tokenId from creation event");
-      }
-      
-      const tokenId = event.args[0];
-      
+      await createTx.wait();
+
       // Step 2: Mint the NFT
       setMessage('Minting NFT...');
-      const mintTx = await contract.mintNFT(tokenId, accountData.address, {
-        value: parseEther(mintPrice)
-      });
-      
+      const mintTx = await contract.mintNFT(0, accountData.address, { value: ethers.parseEther(mintPrice) });
       setMessage('Waiting for mint confirmation...');
       await mintTx.wait();
-      
+
       // Save to local storage
       const purchasedNFT: PurchasedNFT = {
-        tokenId: Number(tokenId),
+        tokenId: 0, // Replace with actual tokenId if available
         title: nftData.title,
         image: nftData.image,
         creator: nftData.creator,
         price: mintPrice,
         purchaseDate: new Date().toISOString(),
         owner: accountData.address,
-        metadataURI: nftData.metadataURI
+        metadataURI: nftData.metadataURI,
       };
-      
+
       saveNFTToStorage(purchasedNFT);
       setMessage('NFT Minted successfully!');
     } catch (error: any) {
@@ -328,21 +176,36 @@ export const MarketPlace = () => {
     }
   };
 
+  const saveNFTToStorage = (nftData: PurchasedNFT) => {
+    try {
+      const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
+      const walletNFTs = allStoredNFTs[nftData.owner] || [];
+      const updatedWalletNFTs = [...walletNFTs, nftData];
+      const updatedStorage = {
+        ...allStoredNFTs,
+        [nftData.owner]: updatedWalletNFTs,
+      };
+      localStorage.setItem('purchasedNFTs', JSON.stringify(updatedStorage));
+    } catch (error) {
+      console.error('Error saving NFT to localStorage:', error);
+    }
+  };
+
   const categories = ["Art", "Collectibles", "Metaverse", "Virtual Worlds", "Sports", "Music"];
 
   return (
     <div className="min-h-screen p-8">
-      <h1 className={`text-3xl font-bold mb-8 text-white  bg-clip-text ${archivo.className}`}>
+      <h1 className={`text-3xl font-bold mb-8 text-white bg-clip-text ${archivo.className}`}>
         Top Collections
       </h1>
-      
+
       <div className="flex gap-4 mb-8 overflow-x-auto">
         {categories.map((category, index) => (
           <button
             key={category}
             className={`px-6 py-2 rounded-full ${
-              index === 0 
-                ? 'bg-blue-500 text-white' 
+              index === 0
+                ? 'bg-blue-500 text-white'
                 : 'bg-opacity-20 bg-white text-white backdrop-blur-sm'
             }`}
           >
@@ -352,18 +215,18 @@ export const MarketPlace = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {availableCollections.map((collection) => (
-        <NFTCard 
-        key={collection.title}
-        image={collection.image}
-        title={collection.title}
-        creator={collection.creator}
-        mintPrice={mintPrice}
-        priceUSD={collection.priceUSD}
-        change={collection.change}
-        onMint={() => handleMint(collection)}
-      />
-      ))}
+        {availableCollections.map((collection) => (
+          <NFTCard
+            key={collection.title}
+            image={collection.image}
+            title={collection.title}
+            creator={collection.creator}
+            mintPrice={mintPrice}
+            priceUSD={collection.priceUSD}
+            change={collection.change}
+            onMint={() => handleMint(collection)}
+          />
+        ))}
       </div>
 
       <div className="flex justify-center">
