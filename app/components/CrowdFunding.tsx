@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Bookmark, Users, Clock } from 'lucide-react';
+import { Bookmark, Users, Clock, Plus } from 'lucide-react';
 import { Archivo } from 'next/font/google';
 import { BrowserProvider, ethers, JsonRpcSigner, Contract } from 'ethers';
 import contractABI from '../artifacts/contracts/CrowdFunding.sol/CrowdFunding.json';
@@ -25,6 +25,14 @@ interface Campaign {
   contributionAmounts: bigint[];
 }
 
+interface CreateCampaignForm {
+  title: string;
+  description: string;
+  imageURI: string;
+  goal: string;
+  duration: string;
+}
+
 const CrowdFunding = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
@@ -34,9 +42,17 @@ const CrowdFunding = () => {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const contractAddress = '0x3Bd1a89cd6D97f381035B80CdD3c2CCb1D1d7519';
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [createForm, setCreateForm] = useState<CreateCampaignForm>({
+    title: '',
+    description: '',
+    imageURI: '',
+    goal: '',
+    duration: '30',
+  });
 
-  // Initialize provider and signer
+  const contractAddress = '0xa85f96d8B735721725A92d4FD3FD903A8E40c800';
+
   useEffect(() => {
     const initializeProvider = async () => {
       if (typeof window.ethereum !== 'undefined') {
@@ -61,7 +77,6 @@ const CrowdFunding = () => {
     initializeProvider();
   }, []);
 
-  // Initialize contract and fetch campaigns
   useEffect(() => {
     if (!provider || !signer) return;
 
@@ -79,7 +94,6 @@ const CrowdFunding = () => {
           signer
         );
         setContract(crowdFundingContract);
-
         const campaigns = await crowdFundingContract.getAllCamapigns();
         setCampaigns(campaigns);
       } catch (error) {
@@ -90,20 +104,16 @@ const CrowdFunding = () => {
     initializeContract();
   }, [provider, signer]);
 
-  // Handle payment
   const handlePayment = async () => {
     if (!contract || !selectedCampaign || !paymentAmount) return;
-
     try {
       const amountInWei = ethers.parseEther(paymentAmount);
       const tx = await contract.contribute(selectedCampaign.id, { value: amountInWei });
       await tx.wait();
-
-      // Refresh campaigns after payment
       const updatedCampaigns = await contract.getAllCamapigns();
+      console.log(updatedCampaigns)
       setCampaigns(updatedCampaigns);
-
-      // Close modal and reset state
+  
       setIsModalOpen(false);
       setSelectedCampaign(null);
       setPaymentAmount('');
@@ -112,8 +122,48 @@ const CrowdFunding = () => {
     }
   };
 
+  // Handle create campaign
+  const handleCreateCampaign = async () => {
+    if (!contract) return;
+
+    try {
+      const goalInWei = ethers.parseEther(createForm.goal);
+      const startTime = Math.floor(Date.now() / 1000);
+      const endTime = startTime + (parseInt(createForm.duration) * 24 * 60 * 60);
+
+      console.log(createForm.title)
+      console.log(createForm.description)
+      console.log(endTime)
+      console.log(goalInWei)
+      const tx = await contract.createCampaign(
+        createForm.title,
+        createForm.description,
+        createForm.imageURI,
+        goalInWei,
+        endTime
+      );
+      await tx.wait();
+
+      // Refresh campaigns
+      const updatedCampaigns = await contract.getAllCamapigns();
+      setCampaigns(updatedCampaigns);
+
+      // Reset form and close modal
+      setCreateForm({
+        title: '',
+        description: '',
+        imageURI: '',
+        goal: '',
+        duration: '30',
+      });
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+    }
+  };
+
   const CampaignCard = ({ campaign }: { campaign: Campaign }) => {
-    const progress = Number((campaign.totalContributions) / campaign.goal);
+    const progress = Number((campaign.totalContributions * BigInt(100)) / campaign.goal);
     const daysLeft = Math.floor(
       (Number(campaign.endsAt) - Math.floor(Date.now() / 1000)) / 86400
     );
@@ -168,15 +218,82 @@ const CrowdFunding = () => {
   };
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen p-8 relative">
       <h1 className={`text-3xl font-bold mb-8 text-white bg-clip-text ${archivo.className}`}>
         Crowd Funding
       </h1>
+      
       <div className="flex flex-wrap gap-6 justify-start">
         {campaigns.map((campaign) => (
           <CampaignCard key={campaign.id.toString()} campaign={campaign} />
         ))}
       </div>
+
+      <button
+        onClick={() => setIsCreateModalOpen(true)}
+        className="fixed bottom-8 right-8 w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 transition-colors"
+      >
+        <Plus className="w-8 h-8 text-white" />
+      </button>
+
+      {/* Create Campaign Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Create New Campaign</h2>
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Campaign Title"
+                value={createForm.title}
+                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+              <textarea
+                placeholder="Campaign Description"
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded h-32"
+              />
+              <input
+                type="text"
+                placeholder="Image URL"
+                value={createForm.imageURI}
+                onChange={(e) => setCreateForm({ ...createForm, imageURI: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+              <input
+                type="text"
+                placeholder="Goal (ETH)"
+                value={createForm.goal}
+                onChange={(e) => setCreateForm({ ...createForm, goal: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+              <input
+                type="number"
+                placeholder="Duration (days)"
+                value={createForm.duration}
+                onChange={(e) => setCreateForm({ ...createForm, duration: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateCampaign}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Create Campaign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Modal */}
       {isModalOpen && selectedCampaign && (
