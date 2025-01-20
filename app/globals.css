@@ -71,3 +71,42 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.callout {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.vision {
+  margin-bottom: 40px;
+}
+
+.vision h2 {
+  color: #555;
+}
+
+.vision p {
+  line-height: 1.6;
+}
+
+.images {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.images img {
+  max-width: 45%;
+  height: auto;
+  border-radius: 8px;
+}
