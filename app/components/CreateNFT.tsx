@@ -6,6 +6,7 @@ import { Archivo } from "next/font/google";
 import { AccountType } from "../wallet/page";
 import contractABI from '../artifacts/contracts/NFT.sol/NFTMarketplaceToken.json';
 import { toast } from "react-hot-toast";
+import axios from "axios";
 
 const archivo = Archivo({
   weight: "900",
@@ -20,14 +21,11 @@ interface FormErrors {
 }
 
 interface NFTMetadata {
-  id: string;
   name: string;
-  description: string;
+  description?: string;
   imageData: string;
-  owner: string;
+  owner?: string;
   price: string;
-  createdAt: number;
-  txHash?: string;
 }
 
 export default function CreateNFT() {
@@ -45,7 +43,7 @@ export default function CreateNFT() {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
   const [accountData, setAccountData] = useState<AccountType | null>(null);
 
-  const contractAddress = "0x5AaA1c838039a4dD3C8E4fc86BB9c5b4387f40Ee";
+  const contractAddress = "0x156d1C53B073652C173B3DCB043bf3a3ebdb89Ab";
 
   useEffect(() => {
     const initializeProvider = async () => {
@@ -145,40 +143,26 @@ export default function CreateNFT() {
     setIsLoading(true);
 
     try {
-      // Convert price to wei
       const priceInWei = ethers.parseEther(price);
 
-      // Call the createNFT function
-      const tx = await contract!.createNFT(name, priceInWei);
+      const tx = await contract!.createNFT(
+        name,          // string memory name
+        imageData,     // string memory imageURL
+        priceInWei     // uint256 price
+      );
+
       await tx.wait();
 
-      // Save NFT metadata to local storage
-      const nftData: NFTMetadata = {
-        id: tx.hash, // Use transaction hash as a temporary ID
-        name,
-        description,
-        imageData,
-        owner,
-        price,
-        createdAt: Date.now(),
-        txHash: tx.hash,
-      };
-      saveNFTToLocalStorage(nftData);
-
-      // Show success toast
       toast.success('NFT created successfully!');
-
-      // Reset form state
       resetForm();
 
-      console.log('NFT created with transaction hash:', tx.hash);
     } catch (error) {
       console.error('Error creating NFT:', error);
       toast.error('Failed to create NFT');
     } finally {
       setIsLoading(false);
     }
-  };
+};
 
   const resetForm = () => {
     setName("");
@@ -190,31 +174,40 @@ export default function CreateNFT() {
   };
 
   const handleImageUpload = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { 
-      toast.error('File size too large. Please upload an image under 10MB');
-      return;
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Invalid file type. Please upload a JPEG, PNG, or GIF');
-      return;
-    }
-
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImageData(base64String);
-        setErrors(prev => ({ ...prev, image: undefined }));
-      };
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append('image', file);
+  
+      console.log('Uploading file:', file.name); // Debug log
+      console.log('FormData contents:', Array.from(formData.entries())); // Debug log
+  
+      const response = await axios.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000,
+        validateStatus: (status) => {
+          console.log('Response status:', status); 
+          return status < 500;
+        },
+      }); 
+  
+      if (response.data.filePath) {
+        setImageData(response.data.filePath);
+        toast.success('Image uploaded successfully!');
+      }
     } catch (error) {
-      console.error('Error processing image:', error);
-      toast.error('Failed to process image');
+      console.error('Full upload error:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Request config:', error.config);
+        console.error('Response data:', error.response?.data);
+        toast.error(`Upload failed: ${error.response?.data?.error || error.message}`);
+      } else {
+        toast.error('Failed to upload image');
+      }
     }
   };
-
+  
   return (
     <div className="p-6 bg-[#111111] min-h-screen">
       <h2 className={`text-white text-3xl mb-2 ${archivo.className}`}>Create an NFT</h2>

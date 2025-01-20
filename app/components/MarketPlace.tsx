@@ -39,33 +39,37 @@ interface NFTCardProps {
   priceUSD: string;
   change: number;
   onMint: () => Promise<void>;
+  isOwned: boolean;
 }
 
-const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, mintPrice, priceUSD, change, onMint }) => (
+const NFTCard: React.FC<NFTCardProps> = ({ image, title, creator, mintPrice, priceUSD, change, onMint, isOwned }) => (
   <div className="relative bg-opacity-15 bg-white rounded-xl p-4 backdrop-blur-sm">
     <div className="aspect-square rounded-lg overflow-hidden mb-3">
       <img src={image || "/api/placeholder/400/400"} alt={title} className="w-full h-full object-cover" />
     </div>
     <h3 className="text-white font-semibold mb-1">{title}</h3>
-    <p className="text-gray-400 text-sm mb-3">{creator}</p>
+    <p className="text-gray-400 text-sm mb-3 truncate w-[15ch]">{creator}</p>
     <div className="flex justify-between items-center mb-4">
       <div>
         <p className="text-white font-medium">{mintPrice} ETH</p>
         <p className="text-gray-400 text-sm">Mint Price</p>
       </div>
-      <div className="text-right">
-        <p className="text-white">${priceUSD}</p>
-        <p className={`text-sm ${change > 0 ? 'text-green-500' : 'text-red-500'}`}>
-          {change > 0 ? '+' : ''}{change}%
-        </p>
-      </div>
     </div>
-    <button 
-      onClick={onMint}
-      className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-    >
-      Mint NFT
-    </button>
+    {isOwned ? (
+      <button 
+        disabled
+        className="w-full py-2 bg-gray-500 text-white rounded-lg cursor-not-allowed"
+      >
+        Owned by you
+      </button>
+    ) : (
+      <button 
+        onClick={onMint}
+        className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+      >
+        Mint NFT
+      </button>
+    )}
   </div>
 );
 
@@ -113,7 +117,6 @@ export const MarketPlace = () => {
         const price = await nftContract.mintPrice();
         setMintPrice(ethers.formatEther(price));
 
-        console.log(nftContract)
         const allNFTs = await nftContract.getAllNFTs();
         const collections: CollectionNFT[] = allNFTs.map((nft: any) => ({
           image: nft.imageURL,
@@ -143,12 +146,6 @@ export const MarketPlace = () => {
         throw new Error("Contract not initialized or wallet not connected");
       }
 
-      // Step 1: Create the NFT
-      const createTx = await contract.createNFT(nftData.title, nftData.metadataURI, ethers.parseEther(nftData.price));
-      setMessage('Waiting for NFT creation confirmation...');
-      await createTx.wait();
-
-      // Step 2: Mint the NFT
       setMessage('Minting NFT...');
       const mintTx = await contract.mintNFT(0, accountData.address, { value: ethers.parseEther(mintPrice) });
       setMessage('Waiting for mint confirmation...');
@@ -198,22 +195,6 @@ export const MarketPlace = () => {
       <h1 className={`text-3xl font-bold mb-8 text-white bg-clip-text ${archivo.className}`}>
         Top Collections
       </h1>
-
-      <div className="flex gap-4 mb-8 overflow-x-auto">
-        {categories.map((category, index) => (
-          <button
-            key={category}
-            className={`px-6 py-2 rounded-full ${
-              index === 0
-                ? 'bg-blue-500 text-white'
-                : 'bg-opacity-20 bg-white text-white backdrop-blur-sm'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {availableCollections.map((collection) => (
           <NFTCard
@@ -225,14 +206,9 @@ export const MarketPlace = () => {
             priceUSD={collection.priceUSD}
             change={collection.change}
             onMint={() => handleMint(collection)}
+            isOwned={collection.creator === accountData?.address || collection.creator === accountData?.address}
           />
         ))}
-      </div>
-
-      <div className="flex justify-center">
-        <button className="px-8 py-3 rounded-full bg-opacity-20 bg-white text-white backdrop-blur-sm flex items-center gap-2">
-          see more <ChevronRight size={20} />
-        </button>
       </div>
     </div>
   );

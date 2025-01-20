@@ -18,7 +18,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
 
   const handleFile = (file: File) => {
     onFileSelect(file);
+    console.log(file);
     const url = URL.createObjectURL(file);
+    console.log(url);
     setPreview(url);
   };
 

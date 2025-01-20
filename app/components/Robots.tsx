@@ -3,6 +3,8 @@ import { Archivo } from 'next/font/google';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ethers } from 'ethers';
+import contractABI from '../artifacts/contracts/NFT.sol/NFTMarketplaceToken.json';
 
 const archivo = Archivo({
   weight: '900',
@@ -21,24 +23,71 @@ interface PurchasedNFT {
 export default function Robots() {
   const [purchasedNFTs, setPurchasedNFTs] = useState<PurchasedNFT[]>([]);
   const [walletAddress, setWalletAddress] = useState<string>('');
+  const [contract, setContract] = useState<ethers.Contract>();
+
+  const contractAddress = "0x156d1C53B073652C173B3DCB043bf3a3ebdb89Ab";
 
   useEffect(() => {
-    const storedData = localStorage.getItem('walletData');
-    if (storedData) {
-      const parsedData = JSON.parse(storedData);
-      setWalletAddress(parsedData.address);
-    }
+    const initializeProvider = async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          const address = await signer.getAddress();
+          setWalletAddress(address);
 
-    try {
-      const allStoredNFTs = JSON.parse(localStorage.getItem('purchasedNFTs') || '{}');
-      console.log(allStoredNFTs)
-      if (walletAddress && allStoredNFTs[walletAddress]) {
-        setPurchasedNFTs(allStoredNFTs[walletAddress]);
+          const nftContract = new ethers.Contract(contractAddress, contractABI.abi, signer);
+          setContract(nftContract);
+        } catch (error) {
+          console.error('Error initializing provider:', error);
+        }
       }
-    } catch (error) {
-      console.error('Error loading purchased NFTs:', error);
-    }
-  }, [walletAddress]);
+    };
+
+    initializeProvider();
+  }, []);
+
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      if (contract && walletAddress) {
+        try {
+          const allNFTs = await contract.getAllNFTs();
+
+
+          const nfts = allNFTs
+            .map((nft: any, tokenId: number) => {
+              const nftData = {
+                imageURL: nft.imageURL,
+                creator: nft.creator,
+                price: nft.price.toString(),
+                createdAt: nft.createdAt,
+                owner: nft.owner,
+                title: nft.name,
+              };
+
+              if (nftData.creator === walletAddress) {
+                return {
+                  image: nftData.imageURL,
+                  creator: nftData.creator,
+                  price: ethers.formatEther(nftData.price),
+                  purchaseDate: new Date(Number(nftData.createdAt) * 1000).toLocaleDateString(),
+                  owner: walletAddress,
+                  title: nftData.title,
+                };
+              }
+              return null;
+            })
+            .filter((nft: any) => nft !== null); 
+
+          setPurchasedNFTs(nfts);
+        } catch (error) {
+          console.error('Error fetching NFTs:', error);
+        }
+      }
+    };
+
+    fetchNFTs();
+  }, [contract, walletAddress]);
 
   return (
     <div className="p-6 bg-[#111111] min-h-screen">
@@ -69,7 +118,6 @@ export default function Robots() {
                 </a>
               </div>
               <div className="relative aspect-square mb-4 bg-[#e8f5d3] rounded-2xl overflow-hidden">
-                {/* Use the base64 string directly in the src attribute */}
                 <Image
                   src={nft.image}
                   alt={nft.title}
