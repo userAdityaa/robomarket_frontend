@@ -4,6 +4,7 @@ import { Space_Mono } from 'next/font/google';
 import { Twitter, HelpCircle, Gift, Box, FileText, PackagePlus } from 'lucide-react';
 import Image from 'next/image';
 import { MarketPlace, Robots, CreateNFT, CrowdFunding } from '../components';
+import Roadmap from '../components/Roadmap';
 
 
 const spaceMono = Space_Mono({
@@ -19,11 +20,8 @@ const CrowdFundingg = () => (
   <CrowdFunding/>
 );
 
-const Roadmap = () => (
-  <div className="p-6">
-    <h2 className="text-2xl font-bold text-gray-200 mb-4">Roadmap</h2>
-    <div className="text-gray-300">Coming soon...</div>
-  </div>
+const RoadmapContainer = () => (
+  <Roadmap/>
 );
 
 const FAQ = () => (
@@ -62,11 +60,10 @@ export default function Home() {
   const menuItems = [
     { id: 'myRobots', label: 'My Robots', icon: Box, component: MyRobots },
     { id: 'Crowdfunding', label: 'Crowd Funding', icon: Gift, badge: '5', component: CrowdFundingg },
-    { id: 'roadmap', label: 'Roadmap', icon: FileText, soon: true, component: Roadmap },
-    { id: 'faq', label: 'FAQ', icon: HelpCircle, component: FAQ },
     { id: 'buyRobot', label: 'Buy Robot', icon: Box, component: BuyRobot },
     { id: 'twitter', label: 'Twitter', icon: Twitter, component: Twitterr }, 
-    { id: 'create nft', label: "Create Nft", icon: PackagePlus, component: create}
+    { id: 'create nft', label: "Create Nft", icon: PackagePlus, component: create},
+    { id: 'roadmap', label: 'Roadmap', icon: FileText, component: RoadmapContainer },
   ];
 
   const ActiveComponent = menuItems.find(item => item.id === activePage)?.component || MyRobots;
@@ -99,7 +96,6 @@ export default function Home() {
                   {item.badge}
                 </span>
               )}
-              {item.soon && <span className="text-xs text-gray-500">Soon</span>}
             </a>
           ))}
         </div>
