@@ -4,8 +4,7 @@ import { Space_Mono } from 'next/font/google';
 import { Twitter, HelpCircle, Gift, Box, FileText, PackagePlus } from 'lucide-react';
 import Image from 'next/image';
 import { MarketPlace, Robots, CreateNFT, CrowdFunding } from '../components';
-import Roadmap from '../components/Roadmap';
-
+import { FaBars, FaTimes } from 'react-icons/fa';
 
 const spaceMono = Space_Mono({
   weight: '400',
@@ -18,17 +17,6 @@ const MyRobots = () => (
 
 const CrowdFundingg = () => (
   <CrowdFunding/>
-);
-
-const RoadmapContainer = () => (
-  <Roadmap/>
-);
-
-const FAQ = () => (
-  <div className="p-6">
-    <h2 className="text-2xl font-bold text-gray-200 mb-4">FAQ</h2>
-    <div className="text-gray-300">Frequently asked questions will appear here</div>
-  </div>
 );
 
 const BuyRobot = () => (
@@ -49,6 +37,7 @@ const create = () => (
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState("");
   const [activePage, setActivePage] = useState("myRobots");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -63,14 +52,23 @@ export default function Home() {
     { id: 'buyRobot', label: 'Buy Robot', icon: Box, component: BuyRobot },
     { id: 'twitter', label: 'Twitter', icon: Twitter, component: Twitterr }, 
     { id: 'create nft', label: "Create Nft", icon: PackagePlus, component: create},
-    { id: 'roadmap', label: 'Roadmap', icon: FileText, component: RoadmapContainer },
   ];
 
   const ActiveComponent = menuItems.find(item => item.id === activePage)?.component || MyRobots;
 
   return (
     <div className={`bg-[#111111] min-h-screen ${spaceMono.className} flex`}>
-      <nav className="w-[17rem] p-6 text-gray-300 border-r border-zinc-900 h-[100vh] fixed">
+      <button
+        className="fixed top-4 right-4 z-50 p-2 text-gray-300 bg-zinc-800 rounded-lg md:hidden"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+      </button>
+      <nav
+        className={`w-[17rem] p-6 text-gray-300 border-r border-zinc-900 h-[100vh] fixed bg-[#111111] transition-transform duration-300 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0`}
+      >
         <div className="mb-6 ml-[0.5rem]">
           <h1 className="text-xl font-semibold flex items-center gap-2">
             <Image src="/images/logo.png" alt="logo" width={180} height={120} />
@@ -106,7 +104,24 @@ export default function Home() {
           </span>
         </div>
       </nav>
-      <main className="ml-[17rem] flex-1">
+      {/* {isMobileMenuOpen ? 
+      <main
+      className={`flex-1 transition-all duration-300 ${
+        isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100 ml-0 -mt-1.5'
+      }`}
+    >
+      <ActiveComponent />
+    </main>
+    } : {
+      <main>
+      <ActiveComponent
+      </main>
+    } */}
+    <main
+        className={`ml-0 flex-1 transition-all duration-300 ${
+          isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        } md:ml-[17rem]`}
+      >
         <ActiveComponent />
       </main>
     </div>
