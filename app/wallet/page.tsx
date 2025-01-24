@@ -51,6 +51,7 @@ const Wallet = () => {
         const balance = await provider.getBalance(address);
         const network = await provider.getNetwork();
         
+        localStorage.setItem("walletAddress", address);
         localStorage.setItem('walletData', JSON.stringify({
           address,
           balance: ethers.formatEther(balance),
