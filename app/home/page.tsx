@@ -82,6 +82,7 @@ export default function Home() {
               onClick={(e) => {
                 e.preventDefault();
                 setActivePage(item.id);
+                setIsMobileMenuOpen(false);
               }}
               className={`flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-800 ${
                 activePage === item.id ? 'bg-zinc-700 bg-opacity-30' : ''
