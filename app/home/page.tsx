@@ -104,19 +104,6 @@ export default function Home() {
           </span>
         </div>
       </nav>
-      {/* {isMobileMenuOpen ? 
-      <main
-      className={`flex-1 transition-all duration-300 ${
-        isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100 ml-0 -mt-1.5'
-      }`}
-    >
-      <ActiveComponent />
-    </main>
-    } : {
-      <main>
-      <ActiveComponent
-      </main>
-    } */}
     <main
         className={`ml-0 flex-1 transition-all duration-300 ${
           isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
