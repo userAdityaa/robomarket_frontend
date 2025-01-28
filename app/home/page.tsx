@@ -12,15 +12,15 @@ const spaceMono = Space_Mono({
 });
 
 const MyRobots = () => (
-  <Robots/>
+  <Robots />
 );
 
 const CrowdFundingg = () => (
-  <CrowdFunding/>
+  <CrowdFunding />
 );
 
 const BuyRobot = () => (
-  <MarketPlace/>
+  <MarketPlace />
 );
 
 const Twitterr = () => (
@@ -30,14 +30,14 @@ const Twitterr = () => (
   </div>
 );
 
-const create = () => ( 
-  <CreateNFT/>
+const create = () => (
+  <CreateNFT />
 )
 
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState("");
   const [activePage, setActivePage] = useState("myRobots");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -50,8 +50,8 @@ export default function Home() {
     { id: 'myRobots', label: 'My Robots', icon: Box, component: MyRobots },
     { id: 'Crowdfunding', label: 'Crowd Funding', icon: Gift, badge: '5', component: CrowdFundingg },
     { id: 'buyRobot', label: 'Buy Robot', icon: Box, component: BuyRobot },
-    { id: 'twitter', label: 'Twitter', icon: Twitter, component: Twitterr }, 
-    { id: 'create nft', label: "Create Nft", icon: PackagePlus, component: create},
+    { id: 'twitter', label: 'Twitter', icon: Twitter, component: Twitterr },
+    { id: 'create nft', label: "Create Nft", icon: PackagePlus, component: create },
   ];
 
   const ActiveComponent = menuItems.find(item => item.id === activePage)?.component || MyRobots;
@@ -65,9 +65,8 @@ export default function Home() {
         {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
       </button>
       <nav
-        className={`w-[17rem] p-6 text-gray-300 border-r border-zinc-900 h-[100vh] fixed bg-[#111111] transition-transform duration-300 ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`}
+        className={`w-[17rem] p-6 text-gray-300 border-r border-zinc-900 h-[100vh] fixed bg-[#111111] transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0`}
       >
         <div className="mb-6 ml-[0.5rem]">
           <h1 className="text-xl font-semibold flex items-center gap-2">
@@ -84,9 +83,8 @@ export default function Home() {
                 setActivePage(item.id);
                 setIsMobileMenuOpen(false);
               }}
-              className={`flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-800 ${
-                activePage === item.id ? 'bg-zinc-700 bg-opacity-30' : ''
-              }`}
+              className={`flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-800 ${activePage === item.id ? 'bg-zinc-700 bg-opacity-30' : ''
+                }`}
             >
               <item.icon size={22} color='gray' />
               <span>{item.label}</span>
@@ -105,15 +103,12 @@ export default function Home() {
           </span>
         </div>
       </nav>
-    <main
-        className={`ml-0 flex-1 transition-all duration-300 ${
-          isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        } md:ml-[17rem]`}
+      <main
+        className={`ml-0 flex-1 transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          } md:ml-[17rem]`}
       >
         <ActiveComponent />
       </main>
     </div>
   );
 }
-
-// modification will be done here.
