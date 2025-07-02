@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+
+# Robot Marketplace
+
+**Robot Marketplace** is a decentralized platform where users can trade robots or related items, initiate crowdfunding campaigns, and experience a clean, minimal UI. Powered by smart contracts written in Solidity, this marketplace ensures secure, transparent, and trustless transactions.
+
+
+## Features
+
+* Marketplace: Buy, sell, and trade robots or related assets with ease.
+* Crowdfunding: Creators can activate crowdfunding campaigns for their robotics projects.
+* Smart Contracts: Core functionalities powered by Solidity contracts deployed on the blockchain.
+* Clean UI: Minimal, modern, and responsive user interface for a seamless experience.
+* Secure & Transparent: All transactions are immutable and verifiable on-chain.
+
+
+## Tech Stack
+
+* Frontend: React / Next.js (or specify your frontend framework)
+* Blockchain: Solidity, Hardhat / Foundry
+* Wallet Integration: MetaMask / WalletConnect
+* Storage: IPFS / Pinata (optional for assets or metadata)
+* Backend: Node.js / Express (if applicable)
+
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+* Node.js >= 18
+* MetaMask extension
+* Hardhat / Foundry installed globally
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/robot-marketplace.git
+cd robot-marketplace
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Running Locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Start the smart contract dev environment
+npx hardhat node
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Deploy contracts
+npx hardhat run scripts/deploy.js --network localhost
 
-## Learn More
+# Start the frontend
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contracts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Smart contracts are located in the `contracts/` folder.
 
-## Deploy on Vercel
+* `Marketplace.sol`: Handles listing, buying, and selling robots.
+* `CrowdfundFactory.sol`: Allows users to create and manage crowdfunding campaigns.
+* `RobotNFT.sol`: (Optional) NFT contract for tokenizing robots.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Screenshots of the website
+<img width="1440" alt="Screenshot 2025-07-02 at 10 59 54 AM" src="https://github.com/user-attachments/assets/6bc0dd67-4744-4582-b114-6ba2fe0d6da4" />
+<img width="1440" alt="Screenshot 2025-07-02 at 11 00 02 AM" src="https://github.com/user-attachments/assets/b419ff5c-f6af-40b1-8f48-172f8580866a" />
+<img width="1440" alt="Screenshot 2025-07-02 at 11 00 25 AM" src="https://github.com/user-attachments/assets/57bb3699-0715-48dd-bebe-79c63f0166bc" />
+<img width="1440" alt="Screenshot 2025-07-02 at 11 00 51 AM" src="https://github.com/user-attachments/assets/6954eef7-c343-4611-98ae-68ecf9d2d839" />
+<img width="1440" alt="Screenshot 2025-07-02 at 11 01 08 AM" src="https://github.com/user-attachments/assets/7301c6b4-c6e6-4fd7-95f7-db3d8439200e" />
+
