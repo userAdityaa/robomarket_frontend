@@ -66,11 +66,11 @@ Smart contracts are located in the `contracts/` folder.
 ## Screenshots of the website
 <img width="1440" alt="Screenshot 2025-07-02 at 10 59 54 AM" src="https://github.com/user-attachments/assets/6bc0dd67-4744-4582-b114-6ba2fe0d6da4" />
 <img width="1440" alt="Screenshot 2025-07-02 at 11 00 02 AM" src="https://github.com/user-attachments/assets/b419ff5c-f6af-40b1-8f48-172f8580866a" />
-<img width="1440" alt="Screenshot 2025-07-02 at 11 41 31 AM" src="https://github.com/user-attachments/assets/ec9f6c9b-4a22-4240-8edf-32e32560faba" />
-<img width="1440" alt="Screenshot 2025-07-02 at 11 41 37 AM" src="https://github.com/user-attachments/assets/ce25906c-34b9-4f31-b97e-6b21c99f49b8" />
 <img width="1440" alt="Screenshot 2025-07-02 at 11 00 25 AM" src="https://github.com/user-attachments/assets/57bb3699-0715-48dd-bebe-79c63f0166bc" />
-<img width="1440" alt="Screenshot 2025-07-02 at 11 37 06 AM" src="https://github.com/user-attachments/assets/e0c198a3-1e63-44b9-b169-1aa30e97db46" />
+<img width="1440" alt="Screenshot 2025-07-02 at 11 41 31 AM" src="https://github.com/user-attachments/assets/ec9f6c9b-4a22-4240-8edf-32e32560faba" />
 <img width="1440" alt="Screenshot 2025-07-02 at 11 00 51 AM" src="https://github.com/user-attachments/assets/6954eef7-c343-4611-98ae-68ecf9d2d839" />
+<img width="1440" alt="Screenshot 2025-07-02 at 11 41 37 AM" src="https://github.com/user-attachments/assets/ce25906c-34b9-4f31-b97e-6b21c99f49b8" />
+<img width="1440" alt="Screenshot 2025-07-02 at 11 37 06 AM" src="https://github.com/user-attachments/assets/e0c198a3-1e63-44b9-b169-1aa30e97db46" />
 <img width="1440" alt="Screenshot 2025-07-02 at 11 01 08 AM" src="https://github.com/user-attachments/assets/7301c6b4-c6e6-4fd7-95f7-db3d8439200e" />
 
 
