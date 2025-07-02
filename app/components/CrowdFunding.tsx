@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { Bookmark, Users, Clock, Plus, Upload } from 'lucide-react';
 import { Archivo } from 'next/font/google';
 import Image from 'next/image';
@@ -8,14 +8,13 @@ import contractABI from '../artifacts/contracts/CrowdFunding.sol/CrowdFunding.js
 import { AccountType } from '../wallet/page';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
-import { create } from 'domain';
 
 const archivo = Archivo({
   weight: '900',
   subsets: ['latin'],
 });
 
-interface FileUploadProps { 
+interface FileUploadProps {
   onFileSelect: (file: File) => void;
 }
 
@@ -40,7 +39,6 @@ interface CreateCampaignForm {
   goal: string;
   duration: string;
 }
-
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +68,85 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
   );
 };
 
+const CreateCampaignModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: () => void;
+  createForm: CreateCampaignForm;
+  setCreateForm: React.Dispatch<React.SetStateAction<CreateCampaignForm>>;
+  handleFileSelect: (file: File) => void;
+  uploadStatus: string;
+}> = memo(({ isOpen, onClose, onCreate, createForm, setCreateForm, handleFileSelect, uploadStatus }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">Create New Campaign</h2>
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Campaign Title"
+            value={createForm.title}
+            onChange={(e) => setCreateForm(prev => ({ ...prev, title: e.target.value }))}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+
+          <textarea
+            placeholder="Campaign Description"
+            value={createForm.description}
+            onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+            className="w-full p-2 border border-gray-300 rounded h-32"
+          />
+
+          <div className="space-y-2">
+            <FileUpload onFileSelect={handleFileSelect} />
+            {uploadStatus && (
+              <p className={`text-sm ${uploadStatus === 'Upload successful!' ? 'text-green-600' :
+                  uploadStatus === 'Uploading...' ? 'text-blue-600' :
+                    'text-red-600'
+                }`}>
+                {uploadStatus}
+              </p>
+            )}
+          </div>
+
+          <input
+            type="text"
+            placeholder="Goal (ETH)"
+            value={createForm.goal}
+            onChange={(e) => setCreateForm(prev => ({ ...prev, goal: e.target.value }))}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+
+          <input
+            type="number"
+            placeholder="Duration (days)"
+            value={createForm.duration}
+            onChange={(e) => setCreateForm(prev => ({ ...prev, duration: e.target.value }))}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-300 rounded"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onCreate}
+            className="px-4 py-2 bg-blue-500 text-white rounded"
+            disabled={!createForm.imageURI || !createForm.title || !createForm.goal}
+          >
+            Create Campaign
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 const CrowdFunding = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -147,7 +224,7 @@ const CrowdFunding = () => {
   const handleFileSelect = async (file: File) => {
     setUploadedFile(file);
     setUploadStatus('Uploading...');
-    
+
     try {
       const formData = new FormData();
       formData.append('image', file);
@@ -159,92 +236,17 @@ const CrowdFunding = () => {
       });
 
       if (response.data.filePath) {
-        setCreateForm({ ...createForm, imageURI: response.data.filePath });
+        setCreateForm(prev => ({ ...prev, imageURI: response.data.filePath }));
         setUploadStatus('Upload successful!');
         toast.success('Image uploaded successfully!');
       }
+      setUploadedFile(null);
     } catch (error) {
       console.error('Upload error:', error);
       setUploadStatus('Upload failed');
       toast.error('Failed to upload image');
     }
   };
-
-
-  const CreateCampaignModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Create New Campaign</h2>
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Campaign Title"
-            value={createForm.title}
-            onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          
-          <textarea
-            placeholder="Campaign Description"
-            value={createForm.description}
-            onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-            className="w-full p-2 border border-gray-300 rounded h-32"
-          />
-
-          <div className="space-y-2">
-            <FileUpload onFileSelect={handleFileSelect} />
-            {uploadStatus && (
-              <p className={`text-sm ${
-                uploadStatus === 'Upload successful!' ? 'text-green-600' : 
-                uploadStatus === 'Uploading...' ? 'text-blue-600' : 
-                'text-red-600'
-              }`}>
-                {uploadStatus}
-              </p>
-            )}
-          </div>
-
-
-          <input
-            type="text"
-            placeholder="Goal (ETH)"
-            value={createForm.goal}
-            onChange={(e) => setCreateForm({ ...createForm, goal: e.target.value })}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          
-          <input
-            type="number"
-            placeholder="Duration (days)"
-            value={createForm.duration}
-            onChange={(e) => setCreateForm({ ...createForm, duration: e.target.value })}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-        </div>
-        
-        <div className="flex justify-end gap-2 mt-6">
-          <button
-            onClick={() => {
-              setIsCreateModalOpen(false);
-              setUploadedFile(null);
-              setUploadStatus('');
-            }}
-            className="px-4 py-2 bg-gray-300 rounded"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleCreateCampaign}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-            disabled={!createForm.imageURI || !createForm.title || !createForm.goal}
-          >
-            Create Campaign
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
 
   const handlePayment = async () => {
     if (!contract || !selectedCampaign || !paymentAmount) return;
@@ -253,9 +255,8 @@ const CrowdFunding = () => {
       const tx = await contract.contribute(selectedCampaign.id, { value: amountInWei });
       await tx.wait();
       const updatedCampaigns = await contract.getAllCamapigns();
-      console.log(updatedCampaigns)
       setCampaigns(updatedCampaigns);
-  
+
       setIsModalOpen(false);
       setSelectedCampaign(null);
       setPaymentAmount('');
@@ -264,7 +265,6 @@ const CrowdFunding = () => {
     }
   };
 
-  // Handle create campaign
   const handleCreateCampaign = async () => {
     if (!contract) return;
 
@@ -273,10 +273,6 @@ const CrowdFunding = () => {
       const startTime = Math.floor(Date.now() / 1000);
       const endTime = startTime + (parseInt(createForm.duration) * 24 * 60 * 60);
 
-      console.log(createForm.title)
-      console.log(createForm.description)
-      console.log(endTime)
-      console.log(goalInWei)
       const tx = await contract.createCampaign(
         createForm.title,
         createForm.description,
@@ -286,11 +282,9 @@ const CrowdFunding = () => {
       );
       await tx.wait();
 
-      // Refresh campaigns
       const updatedCampaigns = await contract.getAllCamapigns();
       setCampaigns(updatedCampaigns);
 
-      // Reset form and close modal
       setCreateForm({
         title: '',
         description: '',
@@ -299,6 +293,8 @@ const CrowdFunding = () => {
         duration: '30',
       });
       setIsCreateModalOpen(false);
+      setUploadedFile(null);
+      setUploadStatus('');
     } catch (error) {
       console.error('Error creating campaign:', error);
     }
@@ -311,8 +307,7 @@ const CrowdFunding = () => {
     );
 
     return (
-      <div
-        className="w-full max-w-[25rem] bg-opacity-15 bg-white rounded-xl p-6 backdrop-blur-sm cursor-pointer"
+      <div className="w-full max-w-[25rem] bg-opacity-15 bg-white rounded-xl p-6 backdrop-blur-sm cursor-pointer"
         onClick={() => {
           setSelectedCampaign(campaign);
           setIsModalOpen(true);
@@ -364,7 +359,7 @@ const CrowdFunding = () => {
       <h1 className={`text-3xl font-bold mb-8 text-white bg-clip-text ${archivo.className}`}>
         Crowd Funding
       </h1>
-      
+
       <div className="flex flex-wrap gap-6 justify-start">
         {campaigns.map((campaign) => (
           <CampaignCard key={campaign.id.toString()} campaign={campaign} />
@@ -378,9 +373,19 @@ const CrowdFunding = () => {
         <Plus className="w-8 h-8 text-white" />
       </button>
 
-      {isCreateModalOpen && (
-        <CreateCampaignModal/>
-      )}
+      <CreateCampaignModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setUploadedFile(null);
+          setUploadStatus('');
+        }}
+        onCreate={handleCreateCampaign}
+        createForm={createForm}
+        setCreateForm={setCreateForm}
+        handleFileSelect={handleFileSelect}
+        uploadStatus={uploadStatus}
+      />
 
       {isModalOpen && selectedCampaign && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
